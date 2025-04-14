@@ -1,8 +1,108 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
-class LoginPage extends StatelessWidget {
+class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
+
+  @override
+  State<LoginPage> createState() => _LoginPageState();
+}
+
+class _LoginPageState extends State<LoginPage> {
+  final _cpfController = TextEditingController();
+  final _senhaController = TextEditingController();
+  bool _isLoading = false;
+
+  void _showTopAlert(String message) {
+    final overlay = Overlay.of(context);
+    final overlayEntry = OverlayEntry(
+      builder:
+          (context) => Positioned(
+            top: MediaQuery.of(context).padding.top + 16,
+            left: 16,
+            right: 16,
+            child: Material(
+              color: Colors.transparent,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  vertical: 12,
+                  horizontal: 16,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.red,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black26,
+                      blurRadius: 8,
+                      offset: Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.error_outline, color: Colors.white),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        message,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+    );
+
+    overlay.insert(overlayEntry);
+    Future.delayed(const Duration(seconds: 3), () => overlayEntry.remove());
+  }
+
+  Future<void> _login(BuildContext context) async {
+    final cpf = _cpfController.text.trim();
+    final senha = _senhaController.text;
+
+    if (cpf.isEmpty || senha.isEmpty) {
+      _showTopAlert('Preencha todos os campos.');
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      final response = await http.post(
+        Uri.parse('http://10.0.2.2:3000/api/pessoa/login'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'cpf': cpf, 'senha': senha}),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final accessToken = data['access_token'];
+        final refreshToken = data['refresh_token'];
+
+        // Salva o refresh token localmente
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('refresh_token', refreshToken);
+
+        context.go('/home');
+      } else {
+        _showTopAlert('CPF ou senha inválidos.');
+      }
+    } catch (e) {
+      _showTopAlert('Erro de conexão com o servidor.');
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +124,6 @@ class LoginPage extends StatelessWidget {
                   'assets/images/vigilantia_logo_initial.png',
                   height: 150,
                 ),
-
                 const SizedBox(height: 20),
                 const Text(
                   'Bem-vindo ao Vigilantia',
@@ -41,9 +140,13 @@ class LoginPage extends StatelessWidget {
                   style: TextStyle(color: Colors.white70),
                 ),
                 const SizedBox(height: 24),
-                _buildTextField(label: 'CPF', obscureText: false),
+                _buildTextField(label: 'CPF', controller: _cpfController),
                 const SizedBox(height: 16),
-                _buildTextField(label: 'Senha', obscureText: true),
+                _buildTextField(
+                  label: 'Senha',
+                  controller: _senhaController,
+                  obscureText: true,
+                ),
                 const SizedBox(height: 8),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -53,7 +156,7 @@ class LoginPage extends StatelessWidget {
                         // Navegar para tela de cadastro
                       },
                       style: TextButton.styleFrom(
-                        foregroundColor: Colors.white, // Cor do texto
+                        foregroundColor: Colors.white,
                       ),
                       child: const Text('Não tem uma conta'),
                     ),
@@ -62,7 +165,7 @@ class LoginPage extends StatelessWidget {
                         // Navegar para recuperação de senha
                       },
                       style: TextButton.styleFrom(
-                        foregroundColor: Colors.white, // Cor do texto
+                        foregroundColor: Colors.white,
                       ),
                       child: const Text('Esqueceu sua senha?'),
                     ),
@@ -72,10 +175,18 @@ class LoginPage extends StatelessWidget {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton.icon(
-                    onPressed: () {
-                      context.go('/home');
-                    },
-                    icon: const Icon(Icons.arrow_forward),
+                    onPressed: _isLoading ? null : () => _login(context),
+                    icon:
+                        _isLoading
+                            ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                            : const Icon(Icons.arrow_forward),
                     label: const Text('Entrar'),
                     style: ElevatedButton.styleFrom(
                       foregroundColor: Colors.white,
@@ -100,6 +211,7 @@ class LoginPage extends StatelessWidget {
 
   static Widget _buildTextField({
     required String label,
+    required TextEditingController controller,
     bool obscureText = false,
   }) {
     return Column(
@@ -114,6 +226,7 @@ class LoginPage extends StatelessWidget {
         ),
         const SizedBox(height: 6),
         TextField(
+          controller: controller,
           obscureText: obscureText,
           style: const TextStyle(color: Colors.white),
           decoration: InputDecoration(
