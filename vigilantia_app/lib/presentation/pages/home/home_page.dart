@@ -1,9 +1,13 @@
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
+
+import 'package:vigilantia_app/shared/widgets/critical_alert_modal.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -23,12 +27,36 @@ class _HomePageState extends State<HomePage> {
   String? _icon;
   String? _country;
   double? _temperature;
+  void _setupFCMListener() {
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      final alertId = message.data['alert_id'] ?? 'default_alert';
+      print(message);
+      SharedPreferences.getInstance().then((prefs) {
+        final lastAlertId = prefs.getString('last_alert_id');
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder:
+              (_) => CriticalAlertModal(
+                title: message.notification?.title ?? 'INFORMATIVO',
+                severity: message.data['severity'] ?? 'alerta',
+                message: message.notification?.body ?? 'Mensagem recebida',
+                footer: message.data['footer'] ?? 'Obrigado pela atenção!',
+              ),
+        );
+        prefs.setString('last_alert_id', alertId);
+      });
+    });
+  }
 
   @override
   void initState() {
     super.initState();
+
     _mapController = MapController();
     _getCurrentLocation();
+
+    _setupFCMListener();
   }
 
   Future<void> _getCurrentLocation() async {
@@ -65,7 +93,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _fetchWeather(double lat, double lon) async {
-    final apiKey = '2fffd9dcb437e3be4f988c2f7c0f4c6c';
+    final apiKey = '3498eae2781f792524c23d00ea85c353';
     final url =
         'https://api.openweathermap.org/data/2.5/weather?lat=$lat&lon=$lon&appid=$apiKey&units=metric&lang=pt_br';
 
@@ -78,7 +106,13 @@ class _HomePageState extends State<HomePage> {
         _region = data['name'];
         _icon = data['weather'][0]['icon'];
         _country = data['sys']['country'];
+
+        print(
+          'Temp: $_temperature | Icon: $_icon | Região: $_region | País: $_country',
+        );
       });
+    } else {
+      print('Erro ao buscar clima: ${response.statusCode}');
     }
   }
 
@@ -153,11 +187,11 @@ class _HomePageState extends State<HomePage> {
                 style: const TextStyle(color: Colors.white, fontSize: 20),
               ),
               Text(
-                "Região: $_region",
+                "País: $_country",
                 style: const TextStyle(color: Colors.white),
               ),
               Text(
-                "País: $_country",
+                "Região: $_region",
                 style: const TextStyle(color: Colors.white),
               ),
             ],

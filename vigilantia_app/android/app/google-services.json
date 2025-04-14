@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "198643877549",
+    "project_id": "hsb-app-339f1",
+    "storage_bucket": "hsb-app-339f1.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:198643877549:android:081806a5eff62335cde824",
+        "android_client_info": {
+          "package_name": "com.example.vigilantia_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBQjqL1eYnwtcOH5czi-MpsNWrQqgFm90A"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
