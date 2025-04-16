@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:vigilantia_app/presentation/pages/permission/check_location_wrapper.dart';
 import 'package:vigilantia_app/presentation/pages/permission/location_permission_page.dart';
+import 'package:vigilantia_app/presentation/pages/register/register_page.dart';
 import 'presentation/pages/home/home_page.dart';
 import 'presentation/pages/login/login_page.dart';
 import 'core/theme/app_theme.dart';
@@ -47,6 +48,10 @@ class MyApp extends StatelessWidget {
         GoRoute(
           path: '/location-permission',
           builder: (context, state) => const LocationPermissionPage(),
+        ),
+        GoRoute(
+          path: '/cadastro',
+          builder: (context, state) => const CadastroPage(),
         ),
       ],
     );

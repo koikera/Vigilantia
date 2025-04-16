@@ -151,23 +151,33 @@ class _LoginPageState extends State<LoginPage> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    TextButton(
-                      onPressed: () {
-                        // Navegar para tela de cadastro
-                      },
-                      style: TextButton.styleFrom(
-                        foregroundColor: Colors.white,
+                    Flexible(
+                      child: TextButton(
+                        onPressed: () {
+                          context.push('/cadastro');
+                        },
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.white,
+                        ),
+                        child: const Text(
+                          'Não tem uma conta?',
+                          textAlign: TextAlign.center,
+                        ),
                       ),
-                      child: const Text('Não tem uma conta'),
                     ),
-                    TextButton(
-                      onPressed: () {
-                        // Navegar para recuperação de senha
-                      },
-                      style: TextButton.styleFrom(
-                        foregroundColor: Colors.white,
+                    Flexible(
+                      child: TextButton(
+                        onPressed: () {
+                          context.push('/recuperar-senha');
+                        },
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.white,
+                        ),
+                        child: const Text(
+                          'Esqueceu sua senha?',
+                          textAlign: TextAlign.center,
+                        ),
                       ),
-                      child: const Text('Esqueceu sua senha?'),
                     ),
                   ],
                 ),

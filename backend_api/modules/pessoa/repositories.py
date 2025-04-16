@@ -34,7 +34,7 @@ class PessoaRepository:
             return hashlib.sha256(value.encode()).hexdigest()
 
         hashed_senha = sha256_hash(json.get('senha'))
-        hashed_cpf = sha256_hash(json.get('cpf'))
+        hashed_cpf = sha256_hash(json.get('CPF'))
 
         query = """SELECT id, senha FROM pessoa WHERE CPF = %s"""
         with mysql_conn.cursor(dictionary=True) as cursor:

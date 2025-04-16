@@ -3,6 +3,8 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 class CadastroPage extends StatefulWidget {
+  const CadastroPage({super.key});
+
   @override
   _CadastroPageState createState() => _CadastroPageState();
 }
@@ -10,7 +12,6 @@ class CadastroPage extends StatefulWidget {
 class _CadastroPageState extends State<CadastroPage> {
   final _formKey = GlobalKey<FormState>();
 
-  // Controllers
   final cpfController = TextEditingController();
   final nomeController = TextEditingController();
   final dataNascimentoController = TextEditingController();
@@ -21,7 +22,6 @@ class _CadastroPageState extends State<CadastroPage> {
   final complementoController = TextEditingController();
   final senhaController = TextEditingController();
 
-  // Busca endereço no ViaCEP
   Future<void> buscarEndereco(String cep) async {
     final url = Uri.parse('https://viacep.com.br/ws/$cep/json/');
     final response = await http.get(url);
@@ -35,10 +35,9 @@ class _CadastroPageState extends State<CadastroPage> {
     }
   }
 
-  // Envia dados para a API
   Future<void> efetuarCadastro() async {
     if (_formKey.currentState!.validate()) {
-      final url = Uri.parse('http://127.0.0.1:3000/api/pessoa/create');
+      final url = Uri.parse('http://10.0.2.2:3000/api/pessoa/create');
       final body = {
         "CPF": cpfController.text,
         "Nome_Completo": nomeController.text,
@@ -57,14 +56,14 @@ class _CadastroPageState extends State<CadastroPage> {
         body: json.encode(body),
       );
 
-      if (response.statusCode == 200) {
+      if (response.statusCode == 201) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Cadastro efetuado com sucesso!')),
+          const SnackBar(content: Text('Cadastro efetuado com sucesso!')),
         );
       } else {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Erro ao cadastrar usuário.')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Erro ao cadastrar usuário.')),
+        );
       }
     }
   }
@@ -86,76 +85,70 @@ class _CadastroPageState extends State<CadastroPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFF005E60),
+      backgroundColor: const Color(0xFF005E60),
       body: Center(
         child: SingleChildScrollView(
           child: Card(
-            margin: EdgeInsets.symmetric(horizontal: 24),
+            color: const Color(0xFF007777),
+            margin: const EdgeInsets.symmetric(horizontal: 24),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20),
             ),
             child: Padding(
-              padding: EdgeInsets.all(24),
+              padding: const EdgeInsets.all(24),
               child: Form(
                 key: _formKey,
                 child: Column(
                   children: [
-                    Image.asset("assets/logo.png", height: 80), // sua logo aqui
-                    SizedBox(height: 10),
-                    Text(
-                      "Vigilantia",
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.red,
-                      ),
+                    Image.asset(
+                      'assets/images/vigilantia_logo_initial.png',
+                      height: 150,
                     ),
-                    SizedBox(height: 10),
-                    Text(
+                    const SizedBox(height: 10),
+                    const Text(
                       "Fique informado e protegido com alertas em tempo real.",
+                      style: TextStyle(color: Colors.white),
+                      textAlign: TextAlign.center,
                     ),
-                    SizedBox(height: 20),
+                    const SizedBox(height: 20),
 
-                    _buildTextField("CPF", cpfController),
-                    _buildTextField("Nome Completo", nomeController),
-                    _buildTextField(
-                      "Data de nascimento",
-                      dataNascimentoController,
-                    ),
-                    _buildTextField("Número de Telefone", telefoneController),
-                    _buildTextField(
+                    _buildTextField(context, "CPF", cpfController),
+                    _buildTextField(context,"Nome Completo", nomeController),
+                    _buildTextField(context,"Data de Nascimento", dataNascimentoController,
+                      readOnly: true,
+                      onChanged: (_) {},),
+                    _buildTextField(context, "Número de Telefone", telefoneController),
+                    _buildTextField(context,
                       "CEP",
                       cepController,
                       onChanged: (value) {
                         if (value.length == 8) buscarEndereco(value);
                       },
                     ),
-                    _buildTextField("Rua", ruaController, readOnly: true),
-                    _buildTextField("Número", numeroController),
-                    _buildTextField("Complemento", complementoController),
-                    _buildTextField(
-                      "Senha",
-                      senhaController,
-                      obscureText: true,
-                    ),
+                    _buildTextField(context, "Rua", ruaController, readOnly: true),
+                    _buildTextField(context, "Número", numeroController),
+                    _buildTextField(context, "Complemento", complementoController),
+                    _buildTextField(context, "Senha", senhaController, obscureText: true),
 
-                    SizedBox(height: 20),
-                    ElevatedButton.icon(
-                      onPressed: efetuarCadastro,
-                      icon: Icon(Icons.arrow_forward),
-                      label: Text("Efetuar Cadastro"),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue,
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 24,
-                          vertical: 16,
+                    const SizedBox(height: 20),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: efetuarCadastro,
+                        icon: const Icon(Icons.arrow_forward),
+                        label: const Text("Efetuar Cadastro"),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blueAccent,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          textStyle: const TextStyle(fontSize: 16),
                         ),
                       ),
                     ),
-                    SizedBox(height: 10),
-                    Text(
+                    const SizedBox(height: 10),
+                    const Text(
                       "Versão 0.0.1",
-                      style: TextStyle(fontSize: 12, color: Colors.grey),
+                      style: TextStyle(fontSize: 12, color: Colors.white54),
                     ),
                   ],
                 ),
@@ -168,6 +161,7 @@ class _CadastroPageState extends State<CadastroPage> {
   }
 
   Widget _buildTextField(
+    BuildContext context,
     String label,
     TextEditingController controller, {
     bool obscureText = false,
@@ -176,24 +170,66 @@ class _CadastroPageState extends State<CadastroPage> {
   }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
-      child: TextFormField(
-        controller: controller,
-        obscureText: obscureText,
-        readOnly: readOnly,
-        onChanged: onChanged,
-        decoration: InputDecoration(
-          labelText: label,
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-          filled: true,
-          fillColor: Colors.white,
-        ),
-        validator: (value) {
-          if (value == null || value.trim().isEmpty) {
-            return 'Campo obrigatório';
-          }
-          return null;
-        },
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 6),
+          TextFormField(
+            controller: controller,
+            obscureText: obscureText,
+            readOnly: readOnly,
+            onChanged: onChanged,
+            style: const TextStyle(color: Colors.white),
+            onTap: readOnly
+                ? () async {
+                    DateTime? pickedDate = await showDatePicker(
+                      context: context,
+                      initialDate: DateTime.now(),
+                      firstDate: DateTime(1900),
+                      lastDate: DateTime.now(),
+                      builder: (context, child) {
+                        return Theme(
+                          data: ThemeData.dark(),
+                          child: child!,
+                        );
+                      },
+                    );
+                    if (pickedDate != null) {
+                      String formattedDate =
+                          "${pickedDate.day.toString().padLeft(2, '0')}/"
+                          "${pickedDate.month.toString().padLeft(2, '0')}/"
+                          "${pickedDate.year}";
+                      controller.text = formattedDate;
+                    }
+                  }
+                : null,
+            decoration: InputDecoration(
+              hintText: 'Digite seu $label',
+              hintStyle: const TextStyle(color: Colors.white54),
+              filled: true,
+              fillColor: Colors.white24,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide.none,
+              ),
+            ),
+            validator: (value) {
+              if (value == null || value.trim().isEmpty) {
+                return 'Campo obrigatório';
+              }
+              return null;
+            },
+          ),
+        ],
       ),
     );
   }
+
 }
