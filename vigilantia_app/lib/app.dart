@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:vigilantia_app/presentation/pages/change_password/change_password.dart';
 import 'package:vigilantia_app/presentation/pages/permission/check_location_wrapper.dart';
 import 'package:vigilantia_app/presentation/pages/permission/location_permission_page.dart';
 import 'package:vigilantia_app/presentation/pages/register/register_page.dart';
@@ -9,6 +10,8 @@ import 'package:vigilantia_app/presentation/pages/home/home_page.dart';
 import 'package:vigilantia_app/presentation/pages/login/login_page.dart';
 import 'package:vigilantia_app/core/theme/app_theme.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
+import 'package:vigilantia_app/presentation/pages/reset_password/reset_password.dart';
+import 'package:vigilantia_app/presentation/pages/verify_code/verify_code.dart';
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -81,6 +84,18 @@ class MyApp extends StatelessWidget {
             GoRoute(
               path: '/cadastro',
               builder: (context, state) => const CadastroPage(),
+            ),
+            GoRoute(
+              path: '/redefinir-senha',
+              builder: (context, state) => ResetPasswordPage(),
+            ),
+            GoRoute(
+              path: '/verificar-codigo',
+              builder: (context, state) => const VerifyCodePage(),
+            ),
+            GoRoute(
+              path: '/trocar-senha',
+              builder: (context, state) => const ChangePasswordPage(),
             ),
           ],
         );

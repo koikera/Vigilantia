@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:vigilantia_app/shared/widgets/primary_button.dart';
+import 'package:vigilantia_app/shared/widgets/top_alert.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -16,62 +18,18 @@ class _LoginPageState extends State<LoginPage> {
   final _senhaController = TextEditingController();
   bool _isLoading = false;
 
-  void _showTopAlert(String message) {
-    final overlay = Overlay.of(context);
-    final overlayEntry = OverlayEntry(
-      builder:
-          (context) => Positioned(
-            top: MediaQuery.of(context).padding.top + 16,
-            left: 16,
-            right: 16,
-            child: Material(
-              color: Colors.transparent,
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  vertical: 12,
-                  horizontal: 16,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.red,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black26,
-                      blurRadius: 8,
-                      offset: Offset(0, 3),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.error_outline, color: Colors.white),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        message,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-    );
-
-    overlay.insert(overlayEntry);
-    Future.delayed(const Duration(seconds: 3), () => overlayEntry.remove());
-  }
+  
 
   Future<void> _login(BuildContext context) async {
     final cpf = _cpfController.text.trim();
     final senha = _senhaController.text;
 
     if (cpf.isEmpty || senha.isEmpty) {
-      _showTopAlert('Preencha todos os campos.');
+      TopAlert.showTopAlert(
+                        context,
+                        "Preencha todos os campos.",
+                        "error",
+                      );
       return;
     }
 
@@ -95,10 +53,10 @@ class _LoginPageState extends State<LoginPage> {
         await prefs.setString('user_data', jsonString);
         context.go('/home');
       } else {
-        _showTopAlert('CPF ou senha inválidos.');
+        TopAlert.showTopAlert(context, 'CPF ou senha inválidos.', 'error');
       }
     } catch (e) {
-      _showTopAlert('Erro de conexão com o servidor.');
+      TopAlert.showTopAlert(context, 'Erro de conexão com o servidor.', 'error');
     } finally {
       setState(() => _isLoading = false);
     }
@@ -168,7 +126,7 @@ class _LoginPageState extends State<LoginPage> {
                     Flexible(
                       child: TextButton(
                         onPressed: () {
-                          context.push('/recuperar-senha');
+                          context.push('/redefinir-senha');
                         },
                         style: TextButton.styleFrom(
                           foregroundColor: Colors.white,
@@ -182,11 +140,9 @@ class _LoginPageState extends State<LoginPage> {
                   ],
                 ),
                 const SizedBox(height: 16),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: _isLoading ? null : () => _login(context),
-                    icon:
+                PrimaryButton(
+                  label: "Entrar",
+                  icon:
                         _isLoading
                             ? const SizedBox(
                               width: 18,
@@ -197,14 +153,7 @@ class _LoginPageState extends State<LoginPage> {
                               ),
                             )
                             : const Icon(Icons.arrow_forward),
-                    label: const Text('Entrar'),
-                    style: ElevatedButton.styleFrom(
-                      foregroundColor: Colors.white,
-                      backgroundColor: Colors.blueAccent,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      textStyle: const TextStyle(fontSize: 16),
-                    ),
-                  ),
+                  onPressed: _isLoading ? null : () => _login(context),
                 ),
                 const SizedBox(height: 16),
                 const Text(

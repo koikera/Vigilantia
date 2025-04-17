@@ -32,6 +32,7 @@ class _HomePageState extends State<HomePage> {
   double? _temperature;
   Map<String, dynamic>? _user_profile;
   String? _estado;
+  String? _bairro;
   int? _idade;
   Future<Map<String, dynamic>?> _getUserData() async {
     final prefs = await SharedPreferences.getInstance();
@@ -58,14 +59,16 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> buscarEndereco(String cep) async {
     final url = Uri.parse('https://viacep.com.br/ws/$cep/json/');
-    print(url);
     final response = await http.get(url);
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
       // Verifica se a resposta não contém erro
       if (!data.containsKey('erro')) {
-        _estado = data['localidade'] ?? ''; // Localidade é o município
-        print('Município encontrado: $_estado');
+        setState(() {
+          _estado = data['localidade'] ?? '';
+          _bairro = data['bairro'] ?? '';
+        });
+
       } else {
         print('Erro no CEP: ${data['erro']}');
       }
@@ -203,9 +206,9 @@ class _HomePageState extends State<HomePage> {
                   "Data de nascimento: ${_user_profile?['Data_Nascimento'] ?? 'Carregando...'}",
                   style: TextStyle(color: Colors.white),
                 ),
-                Text("Cidade: ${_user_profile?['Data_Nascimento'] ?? 'Carregando...'}", style: TextStyle(color: Colors.white)),
+                Text("Cidade: $_estado", style: TextStyle(color: Colors.white)),
                 Text(
-                  "Estado: $_estado",
+                  "Bairro: $_bairro",
                   style: TextStyle(color: Colors.white),
                 ),
               ],
