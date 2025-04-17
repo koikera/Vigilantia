@@ -102,13 +102,6 @@ class PessoaRepository:
         return ''.join(random.choices(string.digits, k=6))
     
     def enviar_sms(self, telefone, codigo):
-        # Exemplo usando a Twilio
-        # client = Client(account_sid, auth_token)
-        # message = client.messages.create(
-        #     body=f"Seu código de recuperação é: {codigo}",
-        #     from_='+1415XXXXXXX',
-        #     to=telefone
-        # )
         logger.info(f"Enviado para {telefone}: Seu código de recuperação é: {codigo}")
 
     def codigo_expirado(self, expiracao):
@@ -121,4 +114,16 @@ class PessoaRepository:
             cursor.execute(query, [codigo, expiracao ,cpf])
             mysql_conn.commit()
 
+    def alterar_senha(self, codigo: str, senha, cpf: str) -> None:
+        mysql_conn = self.db_factory.get_mysql_connection()
+        def sha256_hash(value: str) -> str:
+            return hashlib.sha256(value.encode()).hexdigest()
+
+        hashed_senha = sha256_hash(senha)
+        query = """UPDATE pessoa SET Senha = %s WHERE CPF = %s AND Codigo_Validacao = %s"""
+        with mysql_conn.cursor(dictionary=True) as cursor:
+            cursor.execute(query, [hashed_senha ,cpf, codigo])
+            mysql_conn.commit()
+
+        return "Senha alterada com sucesso"
     

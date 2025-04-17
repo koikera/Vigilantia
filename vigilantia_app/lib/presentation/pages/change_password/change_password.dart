@@ -1,4 +1,9 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vigilantia_app/shared/widgets/primary_button.dart';
 import 'package:vigilantia_app/shared/widgets/top_alert.dart';
 
@@ -15,7 +20,63 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
 
   bool _obscureSenha = true;
   bool _obscureConfirmarSenha = true;
+  Future<void> _change_password(BuildContext context) async {
+  try {
+    if (_senhaController.text != _confirmarSenhaController.text) {
+      // Exibe o alerta de senhas não iguais
+      TopAlert.showTopAlert(
+        context,
+        "As senhas não coincidem!",
+        "error",
+      );
+    } else {
+      TopAlert.showTopAlert(
+        context,
+        "As senhas coincidem!",
+        "info",
+      );
+      final prefs = await SharedPreferences.getInstance();
+      final temp = prefs.getString('temp_reset_password');
 
+      if (temp == null) {
+          TopAlert.showTopAlert(context, 'Informações de recuperação não encontradas.', 'error');
+          return;
+        }
+
+        final tempReset = jsonDecode(temp);
+        final cpf = tempReset['cpf'];
+        final codigo = tempReset['codigo'];
+
+        if (cpf == null || codigo == null || _senhaController.text.isEmpty) {
+          TopAlert.showTopAlert(context, 'Dados inválidos. Tente novamente.', 'error');
+          return;
+        }
+
+        final response = await http.post(
+          Uri.parse('http://10.0.2.2:3000/api/pessoa/alterar-senha'),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({
+            'cpf': cpf,
+            'codigo': codigo,
+            'senha': _senhaController.text,
+          }),
+        );
+
+        final data = jsonDecode(response.body);
+
+        if (response.statusCode == 200) {
+          TopAlert.showTopAlert(context, data['msg'] ?? 'Senha alterada com sucesso!', 'success');
+          await prefs.remove('temp_reset_password');
+          context.go('/');
+        } else {
+          TopAlert.showTopAlert(context, data['error'] ?? 'Erro ao alterar a senha.', 'error');
+        }
+      }
+    
+  } catch (e) {
+    TopAlert.showTopAlert(context, 'Erro de conexão com o servidor.', 'error');
+  }
+}
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -76,22 +137,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
               PrimaryButton(
                 label: "Enviar",
                 icon: const Icon(Icons.arrow_forward),
-                onPressed: () {
-                  if (_senhaController.text != _confirmarSenhaController.text) {
-                    // Exibe o alerta de senhas não iguais
-                    TopAlert.showTopAlert(
-                      context,
-                      "As senhas não coincidem!",
-                      "error",
-                    );
-                  } else {
-                    TopAlert.showTopAlert(
-                      context,
-                      "As senhas coincidem!",
-                      "info",
-                    );
-                  }
-                }
+                onPressed: () => _change_password(context)
               ),
 
               const SizedBox(height: 16),

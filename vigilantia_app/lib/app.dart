@@ -91,7 +91,7 @@ class MyApp extends StatelessWidget {
             ),
             GoRoute(
               path: '/verificar-codigo',
-              builder: (context, state) => const VerifyCodePage(),
+              builder: (context, state) => VerifyCodePage(),
             ),
             GoRoute(
               path: '/trocar-senha',

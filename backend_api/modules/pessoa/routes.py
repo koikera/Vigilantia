@@ -110,5 +110,27 @@ def create_pessoa_blueprint(pessoa_service: PessoaService):
             return jsonify({"msg": "Código válido. Você pode prosseguir para redefinir sua senha."}), 200
         else:
             return jsonify({"error": "Código incorreto"}), 400
+        
+    @pessoa_bp.route('/alterar-senha', methods=['POST'])
+    def alterar_senha():
+        cpf = request.json.get('cpf')
+        codigo_digitado = request.json.get('codigo')
+        senha = request.json.get('senha')
+        if not cpf or not codigo_digitado:
+            return jsonify({"error": "CPF e código são necessários"}), 400
+        
+        usuario = pessoa_service.get_numTelefone_by_cpf(cpf)
+        if not usuario:
+            return jsonify({"error": "Usuário não encontrado"}), 404
+
+        # Verificar se o código está correto e se não expirou
+        if usuario['codigo'] == codigo_digitado:
+            if pessoa_service.codigo_expirado(usuario['expiracao']):
+                return jsonify({"error": "Ops! O tempo limite para trocar a senha acabou."}), 400
+            
+            pessoa_service.alterar_senha(codigo_digitado, senha, cpf)
+            return jsonify({"msg": "Tudo certo! Agora é só entrar com sua nova senha."}), 200
+        else:
+            return jsonify({"error": "Código incorreto"}), 400
 
     return pessoa_bp

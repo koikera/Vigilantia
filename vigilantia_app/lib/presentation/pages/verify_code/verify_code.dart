@@ -1,11 +1,43 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:http/http.dart' as http;
 import 'package:pin_code_fields/pin_code_fields.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vigilantia_app/shared/widgets/primary_button.dart';
+import 'package:vigilantia_app/shared/widgets/top_alert.dart';
 
 class VerifyCodePage extends StatelessWidget {
-  const VerifyCodePage({super.key});
+  final TextEditingController pinController = TextEditingController();
+  VerifyCodePage({super.key});
   
+  Future<void> _verify_code(BuildContext context) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      String? cpf = prefs.getString('cpf_temp');
+      final response = await http.post(
+        Uri.parse('http://10.0.2.2:3000/api/pessoa/validar-codigo'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'cpf': cpf, "codigo": pinController.text}),
+      );
+      final data = jsonDecode(response.body);
+      if (response.statusCode == 200) {
+        TopAlert.showTopAlert(context, data['msg'], 'success');
+        await prefs.remove('cpf_temp');        
+        String jsonString = jsonEncode({'cpf': cpf, "codigo": pinController.text});
+        await prefs.setString('temp_reset_password', jsonString);
+        
+        context.go('/trocar-senha');
+
+      } else {
+        TopAlert.showTopAlert(context, data['error'], 'error');
+      }
+    } catch (e) {
+      TopAlert.showTopAlert(context, 'Erro de conexão com o servidor.', 'error');
+    } finally {
+    }
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -47,6 +79,7 @@ class VerifyCodePage extends StatelessWidget {
                   ),
                   const SizedBox(height: 30),
                   PinCodeTextField(
+                    controller: pinController,
                     appContext: context,
                     length: 6,
                     animationType: AnimationType.fade,
@@ -84,9 +117,7 @@ class VerifyCodePage extends StatelessWidget {
                   PrimaryButton(
                     label: "Proximo",
                     icon: const Icon(Icons.arrow_forward),
-                    onPressed: () {
-                        context.go('/trocar-senha');
-                      },
+                    onPressed: () => _verify_code(context),
                   ),
                   const SizedBox(height: 12),
                   const Text(

@@ -1,12 +1,43 @@
+
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vigilantia_app/shared/widgets/primary_button.dart';
+import 'package:vigilantia_app/shared/widgets/top_alert.dart';
 
 class ResetPasswordPage extends StatelessWidget {
   final TextEditingController cpfController = TextEditingController();
 
   ResetPasswordPage({super.key});
 
+  Future<void> _verify_cpf(BuildContext context) async {
+    try {
+      TopAlert.showTopAlert(context, 'Estamos validando seu CPF, por favor, aguarde.' , 'info');
+      final response = await http.post(
+        Uri.parse('http://10.0.2.2:3000/api/pessoa/esqueceu-senha'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'cpf': cpfController.text}),
+      );
+      final data = jsonDecode(response.body);
+      if (response.statusCode == 200) {
+        final refreshToken = data['refresh_token'];
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('cpf_temp', cpfController.text);
+        TopAlert.showTopAlert(context, data['msg'], 'success');
+
+        context.go('/verificar-codigo');
+
+      } else {
+        TopAlert.showTopAlert(context, data['error'], 'error');
+      }
+    } catch (e) {
+      TopAlert.showTopAlert(context, 'Erro de conexão com o servidor.', 'error');
+    } finally {
+    }
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -79,9 +110,7 @@ class ResetPasswordPage extends StatelessWidget {
                   PrimaryButton(
                     label: "Proximo",
                     icon: const Icon(Icons.arrow_forward),
-                    onPressed: () {
-                        context.go('/verificar-codigo');
-                      },
+                    onPressed: () => _verify_cpf(context),
                   ),
                   const SizedBox(height: 10),
                   const Text(

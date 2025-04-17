@@ -25,3 +25,6 @@ class PessoaService:
     
     def update_codigo(self, codigo, expiracao, cpf):
         return self.repository.update_codigo(codigo, expiracao, cpf)
+    
+    def alterar_senha(self, codigo, senha, cpf):
+        return self.repository.alterar_senha(codigo, senha, cpf)
