@@ -86,13 +86,13 @@ class _LoginPageState extends State<LoginPage> {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        final accessToken = data['access_token'];
         final refreshToken = data['refresh_token'];
 
         // Salva o refresh token localmente
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('refresh_token', refreshToken);
-
+        String jsonString = jsonEncode(data);
+        await prefs.setString('user_data', jsonString);
         context.go('/home');
       } else {
         _showTopAlert('CPF ou senha inválidos.');

@@ -1,12 +1,15 @@
+import 'dart:ffi';
+
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
-
+import 'package:intl/intl.dart';
 import 'package:vigilantia_app/shared/widgets/critical_alert_modal.dart';
 
 class HomePage extends StatefulWidget {
@@ -27,6 +30,50 @@ class _HomePageState extends State<HomePage> {
   String? _icon;
   String? _country;
   double? _temperature;
+  Map<String, dynamic>? _user_profile;
+  String? _estado;
+  int? _idade;
+  Future<Map<String, dynamic>?> _getUserData() async {
+    final prefs = await SharedPreferences.getInstance();
+    String? jsonString = prefs.getString('user_data');
+    if (jsonString != null) {
+      _user_profile = jsonDecode(jsonString);
+      _idade = calcularIdade(_user_profile!['Data_Nascimento']);
+      // Espera a requisição do endereço ser completada antes de continuar
+      await buscarEndereco(_user_profile!['CEP']);
+    }
+  }
+
+  int calcularIdade(String dataNascimento) {
+    DateTime nascimento = DateFormat('dd/MM/yyyy').parse(dataNascimento);
+    DateTime hoje = DateTime.now();
+    int idade = hoje.year - nascimento.year;
+
+    if (hoje.month < nascimento.month || (hoje.month == nascimento.month && hoje.day < nascimento.day)) {
+      idade--;
+    }
+
+    return idade;
+  }
+
+  Future<void> buscarEndereco(String cep) async {
+    final url = Uri.parse('https://viacep.com.br/ws/$cep/json/');
+    print(url);
+    final response = await http.get(url);
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      // Verifica se a resposta não contém erro
+      if (!data.containsKey('erro')) {
+        _estado = data['localidade'] ?? ''; // Localidade é o município
+        print('Município encontrado: $_estado');
+      } else {
+        print('Erro no CEP: ${data['erro']}');
+      }
+    } else {
+      print('Falha na requisição: ${response.statusCode}');
+    }
+  }
+
   void _setupFCMListener() {
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       final alertId = message.data['alert_id'] ?? 'default_alert';
@@ -52,11 +99,16 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-
     _mapController = MapController();
     _getCurrentLocation();
 
     _setupFCMListener();
+    _initializeAsync();
+
+  }
+
+  Future<void> _initializeAsync() async {
+    await _getUserData();
   }
 
   Future<void> _getCurrentLocation() async {
@@ -137,9 +189,9 @@ class _HomePageState extends State<HomePage> {
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
+              children: [
                 Text(
-                  "Alex Hage",
+                  "${_user_profile!['Nome']}",
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 18,
@@ -148,18 +200,18 @@ class _HomePageState extends State<HomePage> {
                 ),
                 SizedBox(height: 4),
                 Text(
-                  "Data de nascimento: 11/11/1985",
+                  "Data de nascimento: ${_user_profile?['Data_Nascimento'] ?? 'Carregando...'}",
                   style: TextStyle(color: Colors.white),
                 ),
-                Text("Cidade: Pará", style: TextStyle(color: Colors.white)),
+                Text("Cidade: ${_user_profile?['Data_Nascimento'] ?? 'Carregando...'}", style: TextStyle(color: Colors.white)),
                 Text(
-                  "Município: Ananindeua",
+                  "Estado: $_estado",
                   style: TextStyle(color: Colors.white),
                 ),
               ],
             ),
           ),
-          const Text("33 Anos", style: TextStyle(color: Colors.white)),
+          Text("$_idade Anos", style: TextStyle(color: Colors.white)),
         ],
       ),
     );
@@ -310,6 +362,75 @@ class _HomePageState extends State<HomePage> {
               height: 40,
               fit: BoxFit.contain,
             ),
+          ],
+        ),
+      ),
+      endDrawer: Drawer(
+        backgroundColor: const Color(0xFF1D4245),
+        child: Column(
+          children: [
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(8.0), // Padding aplicado ao Text
+                  child: Text(
+                    'Menu',
+                    style: TextStyle(
+                      color: Color.fromARGB(255, 123, 149, 151),
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(8.0), // Padding aplicado ao IconButton
+                  child: IconButton(
+                    icon: Icon(Icons.list, color: Color.fromARGB(255, 123, 149, 151)),
+                    onPressed: () {
+                      Navigator.of(context).pop(); // Fecha o drawer
+                    },
+                  ),
+                ),
+              ],
+            ),
+                        Expanded(
+              child: ListView(
+                children: [
+                  // Outros itens do menu, se necessário
+                ],
+              ),
+            ),
+            // Botão "Sair" no final
+            Padding(
+              padding: const EdgeInsets.all(0), // sem padding externo pra grudar no canto
+              child: SizedBox(
+                width: double.infinity,
+                child: TextButton.icon(
+                  onPressed: () async {
+                    final prefs = await SharedPreferences.getInstance();
+                    await prefs.remove('user_data');
+
+                    // Redirecionar para a página de login
+                    context.go('/');
+
+                  },
+                  style: TextButton.styleFrom(
+                    backgroundColor: Colors.transparent,
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 20.0),
+                    foregroundColor: Colors.white,
+                    alignment: Alignment.centerLeft,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero), // <- sem arredondamento
+                  ),
+                  icon: Icon(Icons.logout),
+                  label: Text(
+                    'Sair',
+                    style: TextStyle(fontSize: 16),
+                  ),
+                ),
+              ),
+            )
           ],
         ),
       ),

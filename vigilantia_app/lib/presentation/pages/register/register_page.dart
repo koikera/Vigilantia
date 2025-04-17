@@ -21,6 +21,7 @@ class _CadastroPageState extends State<CadastroPage> {
   final numeroController = TextEditingController();
   final complementoController = TextEditingController();
   final senhaController = TextEditingController();
+  final municipioController = TextEditingController();
 
   Future<void> buscarEndereco(String cep) async {
     final url = Uri.parse('https://viacep.com.br/ws/$cep/json/');
@@ -79,6 +80,7 @@ class _CadastroPageState extends State<CadastroPage> {
     numeroController.dispose();
     complementoController.dispose();
     senhaController.dispose();
+    municipioController.dispose();
     super.dispose();
   }
 

@@ -13,5 +13,7 @@ CREATE TABLE pessoa (
     Numero INT,
     Complemento VARCHAR(256),
     Senha VARCHAR(256),
+    Codigo_Validacao VARCHAR(6),
+    Expiracao_Codigo DATETIME
     PRIMARY KEY (id)
 );
