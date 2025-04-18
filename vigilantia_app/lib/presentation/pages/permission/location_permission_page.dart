@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:go_router/go_router.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 class LocationPermissionPage extends StatelessWidget {
   const LocationPermissionPage({super.key});
@@ -28,7 +29,7 @@ class LocationPermissionPage extends StatelessWidget {
                 const Icon(Icons.location_on, size: 40, color: Colors.blue),
                 const SizedBox(height: 10),
                 const Text(
-                  "O aplicativo Vigilantia precisa acessar a sua localização para funcionar corretamente.\nDeseja permitir?",
+                  "O aplicativo Vigilantia precisa acessar a sua localização e notificações para funcionar corretamente.\nDeseja permitir?",
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 16),
                 ),
@@ -101,6 +102,7 @@ class LocationPermissionPage extends StatelessWidget {
   }
 
   Future<void> _requestPermission(BuildContext context) async {
+    // Localização
     LocationPermission permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied ||
         permission == LocationPermission.deniedForever) {
@@ -109,14 +111,24 @@ class LocationPermissionPage extends StatelessWidget {
 
     if (permission == LocationPermission.always ||
         permission == LocationPermission.whileInUse) {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool('permissao_localizacao_concedida', true);
-      context.go('/');
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Permissão não concedida.")),
-      );
+      // Notificações silenciosamente
+      FirebaseMessaging messaging = FirebaseMessaging.instance;
+      final notifSettings = await messaging.requestPermission();
+
+      if (notifSettings.authorizationStatus != AuthorizationStatus.denied) {
+        final token = await messaging.getToken();
+        debugPrint("🔔 FCM Token: $token");
+
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setBool('permissao_localizacao_concedida', true);
+        context.go('/');
+        return;
+      }
     }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Permissões não concedidas.")),
+    );
   }
 
   @override
@@ -145,7 +157,7 @@ class LocationPermissionPage extends StatelessWidget {
                       ),
                       const SizedBox(height: 20),
                       const Text(
-                        'Este aplicativo utiliza os dados de localização do seu dispositivo para oferecer uma experiência mais personalizada e eficiente. Com essas informações, conseguimos fornecer previsões precisas do clima na sua região, enviar alertas em tempo real sobre mudanças meteorológicas, além de disponibilizar diversos recursos úteis baseados na sua posição atual, como recomendações de vestuário, cuidados com o tempo e notificações sobre condições extremas. O acesso à localização é essencial para garantir que você receba as informações certas, no momento certo. Ao permitir o uso da sua localização, você estará ativando todas as funcionalidades do aplicativo e garantindo uma experiência completa, prática e segura.',
+                        'Este aplicativo utiliza os dados de localização do seu dispositivo para oferecer uma experiência mais personalizada e eficiente. [...]',
                         textAlign: TextAlign.justify,
                         style: TextStyle(color: Colors.white),
                       ),

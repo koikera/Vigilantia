@@ -2,28 +2,51 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
+
+import 'package:vigilantia_app/core/theme/app_theme.dart';
 import 'package:vigilantia_app/presentation/pages/change_password/change_password.dart';
 import 'package:vigilantia_app/presentation/pages/permission/check_location_wrapper.dart';
 import 'package:vigilantia_app/presentation/pages/permission/location_permission_page.dart';
 import 'package:vigilantia_app/presentation/pages/register/register_page.dart';
 import 'package:vigilantia_app/presentation/pages/home/home_page.dart';
 import 'package:vigilantia_app/presentation/pages/login/login_page.dart';
-import 'package:vigilantia_app/core/theme/app_theme.dart';
-import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:vigilantia_app/presentation/pages/reset_password/reset_password.dart';
 import 'package:vigilantia_app/presentation/pages/verify_code/verify_code.dart';
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
+  Future<bool> _hasLocationPermission() async {
+    LocationPermission permission = await Geolocator.checkPermission();
+    return permission == LocationPermission.always ||
+        permission == LocationPermission.whileInUse;
+  }
+
+  Future<bool> _hasNotificationPermission() async {
+    NotificationSettings settings =
+        await FirebaseMessaging.instance.getNotificationSettings();
+    return settings.authorizationStatus == AuthorizationStatus.authorized;
+  }
+
   Future<String> _getInitialRoute() async {
     final prefs = await SharedPreferences.getInstance();
-    final jsonString = prefs.getString('user_data');
 
+    // Verifica permissões
+    final locationGranted = await _hasLocationPermission();
+    final notificationGranted = await _hasNotificationPermission();
+
+    if (!locationGranted || !notificationGranted) {
+      return '/location-permission';
+    }
+
+    // Verifica token do usuário
+    final jsonString = prefs.getString('user_data');
     if (jsonString != null) {
       final Map<String, dynamic> userData = jsonDecode(jsonString);
       final token = userData['access_token'];
-
       if (token != null && !JwtDecoder.isExpired(token)) {
         return '/home';
       }
@@ -56,12 +79,7 @@ class MyApp extends StatelessWidget {
               pageBuilder: (context, state) => CustomTransitionPage(
                 key: state.pageKey,
                 child: const HomePage(),
-                transitionsBuilder: (
-                  context,
-                  animation,
-                  secondaryAnimation,
-                  child,
-                ) {
+                transitionsBuilder: (context, animation, secondaryAnimation, child) {
                   const begin = Offset(1.0, 0.0);
                   const end = Offset.zero;
                   final tween = Tween(begin: begin, end: end)
