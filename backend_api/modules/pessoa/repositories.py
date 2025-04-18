@@ -41,7 +41,6 @@ class PessoaRepository:
         with mysql_conn.cursor(dictionary=True) as cursor:
             cursor.execute(query, [json.get('cpf')])
             result = cursor.fetchone()
-            logger.info(result)
             if result and hashed_senha == result['senha']:
 
                 user_identity = str(result['id'])  # Converta para string
@@ -97,6 +96,17 @@ class PessoaRepository:
             cursor.execute(query, [cpf])
             result = cursor.fetchone()
         return result
+    
+    def verify_cpf(self, cpf: str) -> bool:
+        mysql_conn = self.db_factory.get_mysql_connection()
+        query = """SELECT 1 FROM pessoa WHERE CPF = %s"""
+        with mysql_conn.cursor(dictionary=True) as cursor:
+            cursor.execute(query, [cpf])
+            result = cursor.fetchone()
+            if result:
+                return True
+             
+        return False
     
     def gerar_codigo(self):
         return ''.join(random.choices(string.digits, k=6))

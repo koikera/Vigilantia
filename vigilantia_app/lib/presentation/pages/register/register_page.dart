@@ -1,6 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
+
+import 'package:vigilantia_app/shared/widgets/top_alert.dart';
+import 'package:vigilantia_app/shared/widgets/custom_text_field.dart';
 
 class CadastroPage extends StatefulWidget {
   const CadastroPage({super.key});
@@ -23,6 +29,23 @@ class _CadastroPageState extends State<CadastroPage> {
   final senhaController = TextEditingController();
   final municipioController = TextEditingController();
 
+  // Máscaras para os campos
+  final cpfMask = MaskTextInputFormatter(mask: '###.###.###-##', filter: {"#": RegExp(r'[0-9]')});
+  final telefoneMask = MaskTextInputFormatter(mask: '(##) #####-####', filter: {"#": RegExp(r'[0-9]')});
+  final cepMask = MaskTextInputFormatter(mask: '#####-###', filter: {"#": RegExp(r'[0-9]')});
+
+  String? _validateCPF(String? value) {
+    if (value == null || value.isEmpty) return 'Informe o CPF';
+    if (value.length != 14) return 'CPF deve conter 11 dígitos (com máscara)';
+    return null;
+  }
+
+  String? _validateTelefone(String? value) {
+    if (value == null || value.isEmpty) return 'Informe o telefone';
+    if (value.length < 14 || value.length > 15) return 'Número de telefone inválido';
+    return null;
+  }
+
   Future<void> buscarEndereco(String cep) async {
     final url = Uri.parse('https://viacep.com.br/ws/$cep/json/');
     final response = await http.get(url);
@@ -36,7 +59,7 @@ class _CadastroPageState extends State<CadastroPage> {
     }
   }
 
-  Future<void> efetuarCadastro() async {
+  Future<void> efetuarCadastro(BuildContext context) async {
     if (_formKey.currentState!.validate()) {
       final url = Uri.parse('http://10.0.2.2:3000/api/pessoa/create');
       final body = {
@@ -56,14 +79,20 @@ class _CadastroPageState extends State<CadastroPage> {
         headers: {'Content-Type': 'application/json'},
         body: json.encode(body),
       );
-
+      final data = jsonDecode(response.body);
       if (response.statusCode == 201) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Cadastro efetuado com sucesso!')),
+        TopAlert.showTopAlert(
+          context,
+          "Cadastro efetuado com sucesso!",
+          "success",
         );
+
+        context.go('/');
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Erro ao cadastrar usuário.')),
+        TopAlert.showTopAlert(
+          context,
+          data['msg'],
+          "error",
         );
       }
     }
@@ -114,29 +143,50 @@ class _CadastroPageState extends State<CadastroPage> {
                     ),
                     const SizedBox(height: 20),
 
-                    _buildTextField(context, "CPF", cpfController),
-                    _buildTextField(context,"Nome Completo", nomeController),
-                    _buildTextField(context,"Data de Nascimento", dataNascimentoController,
-                      readOnly: true,
-                      onChanged: (_) {},),
-                    _buildTextField(context, "Número de Telefone", telefoneController),
-                    _buildTextField(context,
-                      "CEP",
-                      cepController,
-                      onChanged: (value) {
-                        if (value.length == 8) buscarEndereco(value);
-                      },
+                    // Campos usando CustomTextField
+                    CustomTextField(
+                      label: "CPF",
+                      controller: cpfController,
+                      validator: _validateCPF,
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [cpfMask],
                     ),
-                    _buildTextField(context, "Rua", ruaController, readOnly: true),
-                    _buildTextField(context, "Número", numeroController),
-                    _buildTextField(context, "Complemento", complementoController),
-                    _buildTextField(context, "Senha", senhaController, obscureText: true),
+
+                    CustomTextField(label: "Nome Completo", controller: nomeController),
+                    CustomTextField(
+                      label: "Data de Nascimento",
+                      controller: dataNascimentoController,
+                      readOnly: true,
+                    ),
+                    CustomTextField(
+                      label: "Número de Telefone",
+                      controller: telefoneController,
+                      validator: _validateTelefone,
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [telefoneMask],
+                    ),
+
+                    CustomTextField(
+                      label: "CEP",
+                      controller: cepController,
+                      onChanged: (value) {
+                        if (value.length == 9) buscarEndereco(value); // CEP com máscara
+                      },
+                      inputFormatters: [cepMask],
+                    ),
+                    CustomTextField(label: "Rua", controller: ruaController, readOnly: true),
+                    CustomTextField(label: "Número", controller: numeroController),
+                    CustomTextField(
+                      label: "Complemento",
+                      controller: complementoController,
+                    ),
+                    CustomTextField(label: "Senha", controller: senhaController, obscureText: true),
 
                     const SizedBox(height: 20),
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton.icon(
-                        onPressed: efetuarCadastro,
+                        onPressed: () => efetuarCadastro(context),
                         icon: const Icon(Icons.arrow_forward),
                         label: const Text("Efetuar Cadastro"),
                         style: ElevatedButton.styleFrom(
@@ -161,77 +211,4 @@ class _CadastroPageState extends State<CadastroPage> {
       ),
     );
   }
-
-  Widget _buildTextField(
-    BuildContext context,
-    String label,
-    TextEditingController controller, {
-    bool obscureText = false,
-    bool readOnly = false,
-    Function(String)? onChanged,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 6),
-          TextFormField(
-            controller: controller,
-            obscureText: obscureText,
-            readOnly: readOnly,
-            onChanged: onChanged,
-            style: const TextStyle(color: Colors.white),
-            onTap: readOnly
-                ? () async {
-                    DateTime? pickedDate = await showDatePicker(
-                      context: context,
-                      initialDate: DateTime.now(),
-                      firstDate: DateTime(1900),
-                      lastDate: DateTime.now(),
-                      builder: (context, child) {
-                        return Theme(
-                          data: ThemeData.dark(),
-                          child: child!,
-                        );
-                      },
-                    );
-                    if (pickedDate != null) {
-                      String formattedDate =
-                          "${pickedDate.day.toString().padLeft(2, '0')}/"
-                          "${pickedDate.month.toString().padLeft(2, '0')}/"
-                          "${pickedDate.year}";
-                      controller.text = formattedDate;
-                    }
-                  }
-                : null,
-            decoration: InputDecoration(
-              hintText: 'Digite seu $label',
-              hintStyle: const TextStyle(color: Colors.white54),
-              filled: true,
-              fillColor: Colors.white24,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide.none,
-              ),
-            ),
-            validator: (value) {
-              if (value == null || value.trim().isEmpty) {
-                return 'Campo obrigatório';
-              }
-              return null;
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
 }

@@ -4,11 +4,19 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
+import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:vigilantia_app/shared/widgets/custom_text_field.dart';
 import 'package:vigilantia_app/shared/widgets/primary_button.dart';
 import 'package:vigilantia_app/shared/widgets/top_alert.dart';
 
 class ResetPasswordPage extends StatelessWidget {
+  final cpfMask = MaskTextInputFormatter(mask: '###.###.###-##', filter: {"#": RegExp(r'[0-9]')});
+  String? _validateCPF(String? value) {
+    if (value == null || value.isEmpty) return 'Informe o CPF';
+    if (value.length != 14) return 'CPF deve conter 11 dígitos (com máscara)';
+    return null;
+  }
   final TextEditingController cpfController = TextEditingController();
 
   ResetPasswordPage({super.key});
@@ -77,34 +85,13 @@ class ResetPasswordPage extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 24),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      "Qual é o CPF cadastrado?",
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  TextField(
+                  CustomTextField(
+                    label: "Qual é o CPF cadastrado?",
                     controller: cpfController,
+                    validator: _validateCPF,
                     keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      hintText: 'Digite o seu CPF',
-                      hintStyle: const TextStyle(color: Colors.white70),
-                      filled: true,
-                      fillColor: Colors.white24,
-                      contentPadding:
-                          const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide.none,
-                      ),
-                    ),
-                    style: const TextStyle(color: Colors.white),
+                    inputFormatters: [cpfMask],
+                    hintText: 'Digite o seu CPF',
                   ),
                   const SizedBox(height: 20),
                   PrimaryButton(

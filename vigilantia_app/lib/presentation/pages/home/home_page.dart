@@ -11,6 +11,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'package:intl/intl.dart';
 import 'package:vigilantia_app/shared/widgets/critical_alert_modal.dart';
+import 'package:vigilantia_app/shared/widgets/custom_scaffold.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -34,6 +35,7 @@ class _HomePageState extends State<HomePage> {
   String? _estado;
   String? _bairro;
   int? _idade;
+  
   Future<Map<String, dynamic>?> _getUserData() async {
     final prefs = await SharedPreferences.getInstance();
     String? jsonString = prefs.getString('user_data');
@@ -354,109 +356,27 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF035C5D),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF007777),
-        title: Row(
-          children: [
-            Image.asset(
-              'assets/images/logo.png',
-              height: 40,
-              fit: BoxFit.contain,
+    return CustomScaffold(
+      body: _loading
+          ? const Center(
+            child: CircularProgressIndicator(color: Colors.white),
+          )
+          : _currentLocation == null
+          ? const Center(
+            child: Text(
+              'Localização não disponível',
+              style: TextStyle(color: Colors.white),
             ),
-          ],
-        ),
-      ),
-      endDrawer: Drawer(
-        backgroundColor: const Color(0xFF1D4245),
-        child: Column(
-          children: [
-            const SizedBox(height: 12),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(8.0), // Padding aplicado ao Text
-                  child: Text(
-                    'Menu',
-                    style: TextStyle(
-                      color: Color.fromARGB(255, 123, 149, 151),
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0), // Padding aplicado ao IconButton
-                  child: IconButton(
-                    icon: Icon(Icons.list, color: Color.fromARGB(255, 123, 149, 151)),
-                    onPressed: () {
-                      Navigator.of(context).pop(); // Fecha o drawer
-                    },
-                  ),
-                ),
-              ],
-            ),
-                        Expanded(
-              child: ListView(
-                children: [
-                  // Outros itens do menu, se necessário
-                ],
-              ),
-            ),
-            // Botão "Sair" no final
-            Padding(
-              padding: const EdgeInsets.all(0), // sem padding externo pra grudar no canto
-              child: SizedBox(
-                width: double.infinity,
-                child: TextButton.icon(
-                  onPressed: () async {
-                    final prefs = await SharedPreferences.getInstance();
-                    await prefs.remove('user_data');
-
-                    // Redirecionar para a página de login
-                    context.go('/');
-
-                  },
-                  style: TextButton.styleFrom(
-                    backgroundColor: Colors.transparent,
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 20.0),
-                    foregroundColor: Colors.white,
-                    alignment: Alignment.centerLeft,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero), // <- sem arredondamento
-                  ),
-                  icon: Icon(Icons.logout),
-                  label: Text(
-                    'Sair',
-                    style: TextStyle(fontSize: 16),
-                  ),
-                ),
-              ),
-            )
-          ],
-        ),
-      ),
-      body:
-          _loading
-              ? const Center(
-                child: CircularProgressIndicator(color: Colors.white),
-              )
-              : _currentLocation == null
-              ? const Center(
-                child: Text(
-                  'Localização não disponível',
-                  style: TextStyle(color: Colors.white),
-                ),
-              )
-              : Column(
-                children: [
-                  const SizedBox(height: 16),
-                  _buildUserInfo(),
-                  _buildWeatherInfo(),
-                  _buildMapArea(),
-                ],
-              ),
-    );
+          )
+          : Column(
+            children: [
+              const SizedBox(height: 16),
+              _buildUserInfo(),
+              _buildWeatherInfo(),
+              _buildMapArea(),
+            ],
+          )
+      );
   }
 }
+          

@@ -14,6 +14,10 @@ class PessoaService:
     
     def get_numTelefone_by_cpf(self, cpf: str):
         return self.repository.get_numTelefone_by_cpf(cpf)
+    
+    def verify_cpf(self, cpf):
+        return self.repository.verify_cpf(cpf)
+    
     def gerar_codigo(self):
         return self.repository.gerar_codigo()
     

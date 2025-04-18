@@ -2,7 +2,9 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
+import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:vigilantia_app/shared/widgets/custom_text_field.dart';
 import 'package:vigilantia_app/shared/widgets/primary_button.dart';
 import 'package:vigilantia_app/shared/widgets/top_alert.dart';
 
@@ -14,7 +16,13 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
+  final cpfMask = MaskTextInputFormatter(mask: '###.###.###-##', filter: {"#": RegExp(r'[0-9]')});
   final _cpfController = TextEditingController();
+  String? _validateCPF(String? value) {
+    if (value == null || value.isEmpty) return 'Informe o CPF';
+    if (value.length != 14) return 'CPF deve conter 11 dígitos (com máscara)';
+    return null;
+  }
   final _senhaController = TextEditingController();
   bool _isLoading = false;
 
@@ -98,13 +106,15 @@ class _LoginPageState extends State<LoginPage> {
                   style: TextStyle(color: Colors.white70),
                 ),
                 const SizedBox(height: 24),
-                _buildTextField(label: 'CPF', controller: _cpfController),
-                const SizedBox(height: 16),
-                _buildTextField(
-                  label: 'Senha',
-                  controller: _senhaController,
-                  obscureText: true,
+                CustomTextField(
+                  label: "CPF",
+                  controller: _cpfController,
+                  validator: _validateCPF,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [cpfMask],
                 ),
+                const SizedBox(height: 16),
+                CustomTextField(label: "Senha", controller: _senhaController, obscureText: true),
                 const SizedBox(height: 8),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -165,41 +175,6 @@ class _LoginPageState extends State<LoginPage> {
           ),
         ),
       ),
-    );
-  }
-
-  static Widget _buildTextField({
-    required String label,
-    required TextEditingController controller,
-    bool obscureText = false,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(height: 6),
-        TextField(
-          controller: controller,
-          obscureText: obscureText,
-          style: const TextStyle(color: Colors.white),
-          decoration: InputDecoration(
-            filled: true,
-            fillColor: Colors.white24,
-            hintText: 'Digite sua $label',
-            hintStyle: const TextStyle(color: Colors.white54),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide.none,
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

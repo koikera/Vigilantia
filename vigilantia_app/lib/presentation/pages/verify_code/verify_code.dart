@@ -38,6 +38,29 @@ class VerifyCodePage extends StatelessWidget {
     } finally {
     }
   }
+
+  Future<void> _verify_cpf(BuildContext context) async {
+    try {
+      TopAlert.showTopAlert(context, 'Estamos reenviando o código.' , 'info');
+      final prefs = await SharedPreferences.getInstance();
+      String? cpf = prefs.getString('cpf_temp');
+      final response = await http.post(
+        Uri.parse('http://10.0.2.2:3000/api/pessoa/esqueceu-senha'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'cpf': cpf}),
+      );
+      final data = jsonDecode(response.body);
+      if (response.statusCode == 200) {
+        final prefs = await SharedPreferences.getInstance();
+        TopAlert.showTopAlert(context, 'Código enviado com sucesso!', 'success');
+      } else {
+        TopAlert.showTopAlert(context, data['error'], 'error');
+      }
+    } catch (e) {
+      TopAlert.showTopAlert(context, 'Erro de conexão com o servidor.', 'error');
+    } finally {
+    }
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -105,9 +128,7 @@ class VerifyCodePage extends StatelessWidget {
                   ),
                   const SizedBox(height: 10),
                   TextButton(
-                    onPressed: () {
-                      // lógica para reenviar código
-                    },
+                    onPressed: () => _verify_cpf(context),
                     child: const Text(
                       "Reenviar código",
                       style: TextStyle(color: Colors.white),

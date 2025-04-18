@@ -14,7 +14,10 @@ def create_pessoa_blueprint(pessoa_service: PessoaService):
     def create_people():
         try:
             data = request.get_json()
-            response = pessoa_service.create_people(data)
+            has_cpf = pessoa_service.verify_cpf(data['CPF'])
+            if has_cpf:
+                return jsonify({"message": "CPF já cadastrado."}), 409
+            pessoa_service.create_people(data)
 
             return jsonify({"success": "Pessoa cadastrada com sucesso"}), 201
         except ValueError as e:
