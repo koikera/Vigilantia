@@ -117,8 +117,39 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  void _setupWebSocketListener(BuildContext context) {
+  Future<Map<String, dynamic>?> buscarEnderecoViaCep(String cep) async {
     try {
+      final response = await http.get(Uri.parse('https://viacep.com.br/ws/$cep/json'));
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (!data.containsKey('erro')) {
+          return data;
+        }
+      }
+    } catch (e) {
+      print('Erro ao buscar endereço: $e');
+    }
+    return null;
+  }
+
+
+  void _setupWebSocketListener(BuildContext context) async {
+    try {
+      // Obtém a posição do usuário
+      final position = await Geolocator.getCurrentPosition();
+      final userCep = await _getApproximateCep(position.latitude, position.longitude);
+
+      if (userCep == null) {
+        print('CEP não pôde ser determinado.');
+        return;
+      }
+
+      final userAddress = await buscarEnderecoViaCep(userCep);
+      if (userAddress == null) {
+        print('Endereço do usuário não encontrado.');
+        return;
+      }
 
       // Fecha a conexão anterior se já estiver conectada
       if (_socket != null && _socket!.connected) {
@@ -135,41 +166,53 @@ class _HomePageState extends State<HomePage> {
       _socket!.onDisconnect((_) => print('Socket desconectado'));
       _socket!.onError((error) => print('Erro no socket: $error'));
 
-      // Conecta de forma segura
       _socket!.connect();
+
       _socket!.off('mensagem');
       _socket!.on('mensagem', (data) async {
         try {
-          print(data);
+
+          final alertRegion = (data['regiao'] ?? '').toString().toLowerCase();
           final alertId = data['alert_id'] ?? 'default_alert';
           final severity = data['severity'] ?? 'alerta';
           final title = data['title'] ?? 'INFORMATIVO';
           final body = data['body'] ?? 'Mensagem recebida';
           final footer = data['footer'] ?? 'Obrigado pela atenção!';
 
-          final prefs = await SharedPreferences.getInstance();
+          // Verifica se a região do usuário bate com a do alerta
+          final userRegion = (userAddress['regiao'] ?? '').toString().toLowerCase();
+          final userState = (userAddress['estado'] ?? '').toString().toLowerCase();
+          print('USER REGIAO $userRegion');
+          print('USER ESTADO $userState');
+          if (userRegion.toLowerCase().contains(alertRegion.toLowerCase()) || alertRegion == 'Todas') {
+            if(userState.toLowerCase().contains(data['estado'].toLowerCase())){
+              final prefs = await SharedPreferences.getInstance();
 
-          if (context.mounted) {
-              showDialog(
-                context: context,
-                barrierDismissible: false,
-                builder: (_) => CriticalAlertModal(
-                  title: title,
-                  severity: severity,
-                  message: body,
-                  footer: footer,
-                ),
-              );
+              if (context.mounted) {
+                showDialog(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (_) => CriticalAlertModal(
+                    title: title,
+                    severity: severity,
+                    message: body,
+                    footer: footer,
+                  ),
+                );
+              }
             }
+          } else {
+            print('Alerta ignorado: região não corresponde');
+          }
         } catch (e) {
           print('Erro ao processar mensagem: $e');
         }
       });
-
     } catch (e) {
       print('Erro ao configurar o WebSocket: $e');
     }
   }
+
 
   @override
   void initState() {
