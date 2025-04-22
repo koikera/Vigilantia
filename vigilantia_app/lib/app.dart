@@ -3,9 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:jwt_decoder/jwt_decoder.dart';
-
 import 'package:vigilantia_app/core/theme/app_theme.dart';
 import 'package:vigilantia_app/presentation/pages/change_password/change_password.dart';
 import 'package:vigilantia_app/presentation/pages/permission/check_location_wrapper.dart';
@@ -25,29 +22,22 @@ class MyApp extends StatelessWidget {
         permission == LocationPermission.whileInUse;
   }
 
-  Future<bool> _hasNotificationPermission() async {
-    NotificationSettings settings =
-        await FirebaseMessaging.instance.getNotificationSettings();
-    return settings.authorizationStatus == AuthorizationStatus.authorized;
-  }
-
   Future<String> _getInitialRoute() async {
     final prefs = await SharedPreferences.getInstance();
 
-    // Verifica permissões
+    // Verifica permissões de localização
     final locationGranted = await _hasLocationPermission();
-    final notificationGranted = await _hasNotificationPermission();
 
-    if (!locationGranted || !notificationGranted) {
+    if (!locationGranted) {
       return '/location-permission';
     }
 
-    // Verifica token do usuário
+    // Verifica o token do usuário (no SharedPreferences)
     final jsonString = prefs.getString('user_data');
     if (jsonString != null) {
       final Map<String, dynamic> userData = jsonDecode(jsonString);
       final token = userData['access_token'];
-      if (token != null && !JwtDecoder.isExpired(token)) {
+      if (token != null) {
         return '/home';
       }
     }

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:go_router/go_router.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 
 class LocationPermissionPage extends StatelessWidget {
   const LocationPermissionPage({super.key});
@@ -102,33 +101,30 @@ class LocationPermissionPage extends StatelessWidget {
   }
 
   Future<void> _requestPermission(BuildContext context) async {
-    // Localização
+    // Verifica a permissão de localização
     LocationPermission permission = await Geolocator.checkPermission();
+    
+    // Solicita permissão caso tenha sido negada ou negada permanentemente
     if (permission == LocationPermission.denied ||
         permission == LocationPermission.deniedForever) {
       permission = await Geolocator.requestPermission();
     }
 
+    // Se a permissão for concedida (sempre ou durante o uso)
     if (permission == LocationPermission.always ||
         permission == LocationPermission.whileInUse) {
-      // Notificações silenciosamente
-      FirebaseMessaging messaging = FirebaseMessaging.instance;
-      final notifSettings = await messaging.requestPermission();
-
-      if (notifSettings.authorizationStatus != AuthorizationStatus.denied) {
-        final token = await messaging.getToken();
-        debugPrint("🔔 FCM Token: $token");
-
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setBool('permissao_localizacao_concedida', true);
-        context.go('/');
-        return;
-      }
+      final prefs = await SharedPreferences.getInstance();
+      // Salva a permissão concedida
+      await prefs.setBool('permissao_localizacao_concedida', true);
+      
+      // Navega para a tela principal
+      Navigator.pushReplacementNamed(context, '/');
+    } else {
+      // Se a permissão for negada, exibe um SnackBar
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Permissão de localização negada.")),
+      );
     }
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Permissões não concedidas.")),
-    );
   }
 
   @override

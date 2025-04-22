@@ -1,6 +1,4 @@
 import 'dart:ffi';
-
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:go_router/go_router.dart';
@@ -12,7 +10,8 @@ import 'dart:convert';
 import 'package:intl/intl.dart';
 import 'package:vigilantia_app/shared/widgets/critical_alert_modal.dart';
 import 'package:vigilantia_app/shared/widgets/custom_scaffold.dart';
-
+import 'package:socket_io_client/socket_io_client.dart' as IO;
+import 'package:geocoding/geocoding.dart' as geo;
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -34,8 +33,10 @@ class _HomePageState extends State<HomePage> {
   Map<String, dynamic>? _user_profile;
   String? _estado;
   String? _bairro;
+  String? _regiao;
   int? _idade;
-  
+  IO.Socket? _socket;
+
   Future<Map<String, dynamic>?> _getUserData() async {
     final prefs = await SharedPreferences.getInstance();
     String? jsonString = prefs.getString('user_data');
@@ -70,7 +71,6 @@ class _HomePageState extends State<HomePage> {
           _estado = data['localidade'] ?? '';
           _bairro = data['bairro'] ?? '';
         });
-
       } else {
         print('Erro no CEP: ${data['erro']}');
       }
@@ -79,26 +79,96 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  void _setupFCMListener() {
-    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      final alertId = message.data['alert_id'] ?? 'default_alert';
-      print(message);
-      SharedPreferences.getInstance().then((prefs) {
-        final lastAlertId = prefs.getString('last_alert_id');
-        showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder:
-              (_) => CriticalAlertModal(
-                title: message.notification?.title ?? 'INFORMATIVO',
-                severity: message.data['severity'] ?? 'alerta',
-                message: message.notification?.body ?? 'Mensagem recebida',
-                footer: message.data['footer'] ?? 'Obrigado pela atenção!',
-              ),
-        );
-        prefs.setString('last_alert_id', alertId);
+  Future<String?> buscarEndereco2(String cep) async {
+    final url = Uri.parse('https://viacep.com.br/ws/$cep/json/');
+    final response = await http.get(url);
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+
+      // Verifica se a resposta não contém erro
+      if (!data.containsKey('erro')) {
+        // Retorna o endereço formatado (exemplo: "bairro, cidade")
+        return '${data['bairro']}, ${data['localidade']}';
+      } else {
+        print('Erro no CEP: ${data['erro']}');
+        return null;
+      }
+    } else {
+      print('Falha na requisição: ${response.statusCode}');
+      return null;
+    }
+  }
+
+  Future<String?> _getApproximateCep(double latitude, double longitude) async {
+    try {
+      // Realiza a geocodificação reversa usando latitude e longitude
+      List<geo.Placemark> placemarks = await geo.placemarkFromCoordinates(latitude, longitude);
+
+      if (placemarks.isNotEmpty) {
+        // Retorna o CEP do primeiro placemark
+        return placemarks.first.postalCode;
+      } else {
+        return null;  // Caso não encontre nenhum endereço
+      }
+    } catch (e) {
+      print('Erro ao obter CEP: $e');
+      return null;
+    }
+  }
+
+  void _setupWebSocketListener(BuildContext context) {
+    try {
+
+      // Fecha a conexão anterior se já estiver conectada
+      if (_socket != null && _socket!.connected) {
+        _socket!.disconnect();
+        _socket!.destroy();
+      }
+
+      _socket = IO.io('http://10.0.2.2:3000', <String, dynamic>{
+        'transports': ['websocket'],
+        'autoConnect': false,
       });
-    });
+
+      _socket!.onConnect((_) => print('Conectado ao socket'));
+      _socket!.onDisconnect((_) => print('Socket desconectado'));
+      _socket!.onError((error) => print('Erro no socket: $error'));
+
+      // Conecta de forma segura
+      _socket!.connect();
+      _socket!.off('mensagem');
+      _socket!.on('mensagem', (data) async {
+        try {
+          print(data);
+          final alertId = data['alert_id'] ?? 'default_alert';
+          final severity = data['severity'] ?? 'alerta';
+          final title = data['title'] ?? 'INFORMATIVO';
+          final body = data['body'] ?? 'Mensagem recebida';
+          final footer = data['footer'] ?? 'Obrigado pela atenção!';
+
+          final prefs = await SharedPreferences.getInstance();
+
+          if (context.mounted) {
+              showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (_) => CriticalAlertModal(
+                  title: title,
+                  severity: severity,
+                  message: body,
+                  footer: footer,
+                ),
+              );
+            }
+        } catch (e) {
+          print('Erro ao processar mensagem: $e');
+        }
+      });
+
+    } catch (e) {
+      print('Erro ao configurar o WebSocket: $e');
+    }
   }
 
   @override
@@ -107,9 +177,8 @@ class _HomePageState extends State<HomePage> {
     _mapController = MapController();
     _getCurrentLocation();
 
-    _setupFCMListener();
+    _setupWebSocketListener(context);
     _initializeAsync();
-
   }
 
   Future<void> _initializeAsync() async {
