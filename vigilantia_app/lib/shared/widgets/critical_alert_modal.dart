@@ -18,14 +18,25 @@ class CriticalAlertModal extends StatelessWidget {
   Color _getBackgroundColor() {
     switch (severity) {
       case 'emergencia':
-        return Colors.red.shade700;
+        return const Color.fromARGB(255, 233, 140, 140);
       case 'alerta':
-        return Colors.orange.shade600;
-      case 'info':
+        return const Color.fromARGB(255, 233, 227, 140);
       default:
-        return const Color(0xFFCCE1E8); // azul claro
+        return const Color.fromARGB(255, 233, 227, 140);
     }
   }
+
+  Color _getTextColor() {
+    switch (severity) {
+      case 'emergencia':
+        return Colors.white;
+      case 'alerta':
+        return Colors.blueAccent;
+      default:
+        return Colors.blueAccent;
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -54,7 +65,7 @@ class CriticalAlertModal extends StatelessWidget {
               Container(
                 padding: EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Color.fromARGB(255, 233, 227, 140), // fundo amarelo
+                  color: _getBackgroundColor(), // fundo amarelo
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Center(
@@ -67,7 +78,7 @@ class CriticalAlertModal extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
-                            color: Colors.blueAccent,
+                            color: _getTextColor(),
                           ),
                         ),
                       ),
@@ -76,7 +87,7 @@ class CriticalAlertModal extends StatelessWidget {
                           "SECRETARIA DE OBRAS",
                           style: TextStyle(
                             fontSize: 14,
-                            color: Colors.blueAccent,
+                            color: _getTextColor(),
                           ),
                         ),
                       ),

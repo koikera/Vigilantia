@@ -184,6 +184,8 @@ class _HomePageState extends State<HomePage> {
           final userState = (userAddress['estado'] ?? '').toString().toLowerCase();
           print('USER REGIAO $userRegion');
           print('USER ESTADO $userState');
+          print('USER ESTADO $alertRegion');
+          print('USER ESTADO $data["estado"]');
           if (userRegion.toLowerCase().contains(alertRegion.toLowerCase()) || alertRegion == 'Todas') {
             if(userState.toLowerCase().contains(data['estado'].toLowerCase())){
               final prefs = await SharedPreferences.getInstance();

@@ -14,6 +14,7 @@ def create_pessoa_blueprint(pessoa_service: PessoaService):
     def create_people():
         try:
             data = request.get_json()
+            logger.info(data)
             has_cpf = pessoa_service.verify_cpf(data['CPF'])
             if has_cpf:
                 return jsonify({"message": "CPF já cadastrado."}), 409

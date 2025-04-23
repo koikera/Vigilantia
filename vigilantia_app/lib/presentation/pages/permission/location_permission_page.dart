@@ -118,7 +118,7 @@ class LocationPermissionPage extends StatelessWidget {
       await prefs.setBool('permissao_localizacao_concedida', true);
       
       // Navega para a tela principal
-      Navigator.pushReplacementNamed(context, '/');
+      context.go('/');
     } else {
       // Se a permissão for negada, exibe um SnackBar
       ScaffoldMessenger.of(context).showSnackBar(
