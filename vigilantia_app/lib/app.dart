@@ -27,7 +27,7 @@ class MyApp extends StatelessWidget {
 
     // Verifica permissões de localização
     final locationGranted = await _hasLocationPermission();
-
+    
     if (!locationGranted) {
       return '/location-permission';
     }
