@@ -21,3 +21,14 @@ services:
       - backend_websocket
     environment:
       - NO_PROXY=localhost,127.0.0.1,backend_websocket
+  angular_adm:
+    build:
+      context: .
+      dockerfile: docker/front/Dockerfile
+    ports:
+      - "4201:4200"
+    container_name: angular_adm
+    volumes:
+      - ./vigilantia_adm:/app
+    environment:
+      - NO_PROXY=localhost,127.0.0.1,backend_websocket
