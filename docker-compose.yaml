@@ -1,0 +1,23 @@
+services:
+  backend_websocket:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    ports:
+      - "5000:3000"
+    container_name: backend_websocket
+    volumes:
+      - ./backend_api:/app
+    environment:
+      - NO_PROXY=localhost,127.0.0.1,backend_websocket
+  nginx:
+    image: nginx:latest
+    container_name: nginx_gateway
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - backend_websocket
+    environment:
+      - NO_PROXY=localhost,127.0.0.1,backend_websocket
