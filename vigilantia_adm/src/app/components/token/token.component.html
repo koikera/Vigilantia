@@ -1,0 +1,31 @@
+<div class="container my-5">
+  <div class="border rounded bg-light d-flex flex-column flex-md-row" style="min-height: 500px;">
+    <div class="p-4 w-100 w-md-50 border rounded-1 rounded-md-start d-flex text-center text-light flex-column justify-content-center align-items-center bg-vigilantia">
+      <img class="w-50 mb-3" src="vigilantia_logo_initial.png" alt="logo">
+      <p class="fs-6">Enviamos um token para o seu celular. Insira-o para completar seu cadastro.</p>
+
+    </div>
+
+    <div class="p-4 w-100 d-flex flex-column justify-content-center align-items-center">
+      <img class="w-50 mb-3" src="logo.png" alt="logo">
+      <form class="w-100" style="max-width: 300px;">
+        <label for="token" class="form-label">Insira o Token</label>
+        <div class="d-flex justify-content-between mb-2">
+            <input 
+                type="tel" pattern="[0-9]*" class="form-control text-center me-1"
+                maxlength="1" style="width: 40px; height: 45px;"
+                #codeInput *ngFor="let item of inputs; let i = index"
+                [(ngModel)]="tokenArray[i]"
+                [ngModelOptions]="{standalone: true}"
+                (input)="onInput($event, i)" />
+            </div>
+
+            <div class="mb-3">
+                <a href="#" class="small text-decoration-none">Reenviar código</a>
+            </div>
+
+            <button (click)="send_token()" class="btn btn-primary w-100">Entrar</button>
+        </form>
+    </div>
+  </div>
+</div>
