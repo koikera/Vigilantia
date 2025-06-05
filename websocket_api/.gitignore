@@ -1,0 +1,55 @@
+# Ambiente virtual
+venv/
+.env/
+.venv/
+
+# Arquivos de cache do Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Arquivos temporários e de backup
+*.log
+*.tmp
+*.swp
+*.bak
+*.orig
+
+# Arquivos do sistema
+.DS_Store
+Thumbs.db
+
+# Configs de IDEs/editors
+.vscode/
+.idea/
+*.code-workspace
+
+# Arquivos de teste
+htmlcov/
+coverage.xml
+.tox/
+nosetests.xml
+*.cover
+
+# Pipenv / Poetry
+Pipfile.lock
+poetry.lock
+
+# Jupyter Notebooks checkpoints
+.ipynb_checkpoints/
+
+# Arquivos gerados
+dist/
+build/
+*.egg-info/
+
+# SQLite (se estiver usando banco local)
+*.sqlite3
+*.db
+
+# Arquivos de ambiente
+.env
+*.env
+
+# Outros
+*.egg

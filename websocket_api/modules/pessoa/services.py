@@ -12,8 +12,8 @@ class PessoaService:
     def create_people(self, data: Dict):
         return self.repository.create(data)
     
-    def get_numTelefone_by_email(self, email: str):
-        return self.repository.get_numTelefone_by_email(email)
+    def get_numTelefone_by_cpf(self, cpf: str):
+        return self.repository.get_numTelefone_by_cpf(cpf)
     
     def verify_cpf(self, cpf):
         return self.repository.verify_cpf(cpf)

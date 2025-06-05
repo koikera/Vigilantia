@@ -37,7 +37,7 @@ class PessoaRepository:
 
         hashed_senha = sha256_hash(json.get('senha'))
 
-        query = """SELECT id, Senha, Data_Nascimento, Nome_Completo, CEP FROM admin WHERE Email = %s"""
+        query = """SELECT id, senha, Data_Nascimento, Nome_Completo, CEP FROM pessoa WHERE CPF = %s"""
         with mysql_conn.cursor(dictionary=True) as cursor:
             cursor.execute(query, [json.get('cpf')])
             result = cursor.fetchone()
@@ -89,11 +89,11 @@ class PessoaRepository:
             mysql_conn.close()
         return json
     
-    def get_numTelefone_by_email(self, email: str) -> Dict:
+    def get_numTelefone_by_cpf(self, cpf: str) -> Dict:
         mysql_conn = self.db_factory.get_mysql_connection()
-        query = """SELECT Numero_Telefone as telefone, Codigo_Validacao as codigo, Expiracao_Codigo as expiracao FROM pessoa WHERE Email = %s"""
+        query = """SELECT Numero_Telefone as telefone, Codigo_Validacao as codigo, Expiracao_Codigo as expiracao FROM pessoa WHERE CPF = %s"""
         with mysql_conn.cursor(dictionary=True) as cursor:
-            cursor.execute(query, [email])
+            cursor.execute(query, [cpf])
             result = cursor.fetchone()
         return result
     

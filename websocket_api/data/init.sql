@@ -1,10 +1,11 @@
-CREATE DATABASE hages148_vigilantia_db;
+CREATE DATABASE vigilantia_db;
 
 USE vigilantia_db;
 
-CREATE TABLE pessoa (
+CREATE TABLE IF NOT EXISTS pessoa (
     id INT NOT NULL AUTO_INCREMENT,
     CPF VARCHAR(256),
+    Email VARCHAR(256),
     Nome_Completo VARCHAR(256),
     Data_Nascimento VARCHAR(256),
     Numero_Telefone VARCHAR(256),
@@ -18,7 +19,25 @@ CREATE TABLE pessoa (
     PRIMARY KEY (id)
 );
 
-CREATE TABLE mensagens (
+
+CREATE TABLE IF NOT EXISTS admin (
+    id INT NOT NULL AUTO_INCREMENT,
+    CPF VARCHAR(256),
+    Email VARCHAR(256),
+    Nome_Completo VARCHAR(256),
+    Data_Nascimento VARCHAR(256),
+    Numero_Telefone VARCHAR(256),
+    CEP VARCHAR(256),
+    Rua VARCHAR(256),
+    Numero INT,
+    Complemento VARCHAR(256),
+    Senha VARCHAR(256),
+    Codigo_Validacao VARCHAR(6),
+    Expiracao_Codigo DATETIME,
+    PRIMARY KEY (id)
+);
+
+CREATE TABLE IF NOT EXISTS mensagens (
     id INT NOT NULL AUTO_INCREMENT,
     remetente_id INT NOT NULL,
     texto TEXT NOT NULL,
@@ -28,7 +47,7 @@ CREATE TABLE mensagens (
     FOREIGN KEY (remetente_id) REFERENCES pessoa(id)
 );
 
-CREATE TABLE usuarios_mensagem (
+CREATE TABLE IF NOT EXISTS usuarios_mensagem (
     id INT NOT NULL AUTO_INCREMENT,
     mensagem_id INT NOT NULL,
     destinatario_id INT NOT NULL,

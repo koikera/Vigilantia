@@ -70,13 +70,13 @@ def create_pessoa_blueprint(pessoa_service: PessoaService):
     @pessoa_bp.route('/esqueceu-senha', methods=['POST'])
     def esqueceu_senha():
         # Recebe o CPF do usuário
-        email = request.json.get('email')
+        cpf = request.json.get('cpf')
         
-        if not email:
-            return jsonify({"error": "Email não fornecido"}), 400
+        if not cpf:
+            return jsonify({"error": "CPF não fornecido"}), 400
         
         # Verifica se o CPF está no banco de dados
-        usuario = pessoa_service.get_numTelefone_by_cpf(email)
+        usuario = pessoa_service.get_numTelefone_by_cpf(cpf)
         if not usuario:
             return jsonify({"error": "Usuário não encontrado"}), 404
         
@@ -85,7 +85,7 @@ def create_pessoa_blueprint(pessoa_service: PessoaService):
         # Gerar um código aleatório
         codigo = pessoa_service.gerar_codigo()
         expiracao = datetime.datetime.now() + datetime.timedelta(minutes=5)  # O código expira em 5 minutos
-        pessoa_service.update_codigo(codigo, expiracao, email)
+        pessoa_service.update_codigo(codigo, expiracao, cpf)
         # Armazenar o código e a data de expiração no banco de dados
         usuario['codigo'] = codigo
         usuario['expiracao'] = expiracao
@@ -97,13 +97,13 @@ def create_pessoa_blueprint(pessoa_service: PessoaService):
     
     @pessoa_bp.route('/validar-codigo', methods=['POST'])
     def validar_codigo():
-        email = request.json.get('email')
+        cpf = request.json.get('cpf')
         codigo_digitado = request.json.get('codigo')
 
-        if not email or not codigo_digitado:
-            return jsonify({"error": "Email e código são necessários"}), 400
+        if not cpf or not codigo_digitado:
+            return jsonify({"error": "CPF e código são necessários"}), 400
         
-        usuario = pessoa_service.get_numTelefone_by_email(email)
+        usuario = pessoa_service.get_numTelefone_by_cpf(cpf)
         if not usuario:
             return jsonify({"error": "Usuário não encontrado"}), 404
 

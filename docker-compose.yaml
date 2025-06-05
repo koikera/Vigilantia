@@ -2,14 +2,37 @@ services:
   backend_websocket:
     build:
       context: .
-      dockerfile: docker/Dockerfile
+      dockerfile: docker/websocket_api/Dockerfile
     ports:
       - "5000:3000"
     container_name: backend_websocket
     volumes:
       - ./backend_api:/app
     environment:
-      - NO_PROXY=localhost,127.0.0.1,backend_websocket
+      - NO_PROXY=localhost,127.0.0.1,backend_websocket,backend_api
+      - MYSQL_HOST=${MYSQL_HOST}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASS=${MYSQL_PASS}
+      - MYSQL_DATA=${MYSQL_DATA}
+      - MYSQL_PORT=${MYSQL_PORT}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+  backend_api:
+    build:
+      context: .
+      dockerfile: docker/backend_api/Dockerfile
+    ports:
+      - "5002:3002"
+    container_name: backend_api
+    volumes:
+      - ./backend_api:/app
+    environment:
+      - NO_PROXY=localhost,127.0.0.1,backend_websocket,backend_api
+      - MYSQL_HOST=${MYSQL_HOST}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASS=${MYSQL_PASS}
+      - MYSQL_DATA=${MYSQL_DATA}
+      - MYSQL_PORT=${MYSQL_PORT}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
   nginx:
     image: nginx:latest
     container_name: nginx_gateway
@@ -20,7 +43,7 @@ services:
     depends_on:
       - backend_websocket
     environment:
-      - NO_PROXY=localhost,127.0.0.1,backend_websocket
+      - NO_PROXY=localhost,127.0.0.1,backend_websocket,backend_api
   angular_adm:
     build:
       context: .
@@ -31,4 +54,20 @@ services:
     volumes:
       - ./vigilantia_adm:/app
     environment:
-      - NO_PROXY=localhost,127.0.0.1,backend_websocket
+      - NO_PROXY=localhost,127.0.0.1,backend_websocket,backend_api
+  vigilantia_db:
+    image: mariadb:11.3
+    container_name: vigilantia_db
+    restart: unless-stopped
+    environment:
+      MARIADB_ROOT_PASSWORD: ${MYSQL_PASS}
+      MARIADB_USER: ${MYSQL_USER}
+      MARIADB_PASSWORD: ${MYSQL_PASS}
+    ports:
+      - "3308:3306"
+    volumes:
+      - vigilantia_mysql_data:/var/lib/mysql
+      - ./websocket_api/data/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+
+volumes:
+  vigilantia_mysql_data:

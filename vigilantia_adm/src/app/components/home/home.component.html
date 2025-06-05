@@ -1,0 +1,78 @@
+<div class="container my-5 d-flex justify-content-center">
+  <div class="border rounded bg-light d-flex flex-column flex-md-row shadow" style="min-height: 600px; max-width: 1000px; width: 100%;">
+    
+    <!-- LADO ESQUERDO -->
+    <div class="p-4 w-100 w-md-50 border-end d-flex flex-column justify-content-center align-items-center bg-vigilantia text-light text-center">
+      <img class="w-50 mb-3" src="logo.png" alt="logo">
+
+      <div class="bg-light-vigilantia text-dark p-3 rounded shadow w-100" style="max-width: 300px;">
+        <div class="bg-warning text-center text-dark py-1 rounded mb-3">
+            <p class="text-primary fw-bold mb-0">INFORMATIVO</p>
+            <p class="text-primary mb-1">Subtítulo</p>
+        </div>
+        <p class="small text-light">
+          A Prefeitura de Ananindeua informa aos motoristas que trafegam pela Região de Águas Brancas que a ponte localizada nas mediações do Canal das Toras estará interditada nesta sexta-feira, 25 de abril, das 7h às 11h.<br><br>
+          A secretária Marilene Pinheiro conta com a compreensão de todos!
+        </p>
+        <img src="logo-prefeitura.png" class="w-50 mt-2" alt="Prefeitura de Ananindeua">
+      </div>
+    </div>
+
+    <!-- LADO DIREITO -->
+    <div class="p-4 w-100 d-flex flex-column justify-content-center align-items-center">
+      <form class="w-100" style="max-width: 600px;">
+        <div class="row g-3">
+          <div class="form-floating col-12 col-md-6">
+            <input type="text" class="form-control" id="titulo" placeholder="Título">
+            <label for="titulo" class="form-label-sm">Título</label>
+          </div>
+          <div class="form-floating col-12 col-md-6">
+            <input type="text" class="form-control" id="titulo" placeholder="Subtítulo">
+            <label for="subtitulo" class="form-label-sm">Subtítulo</label>
+          </div>
+
+          <div class="form-floating col-12 col-md-6">
+            <select class="form-select" id="regiao">
+              <option selected disabled>Selecione a Região</option>
+              <option>Norte</option>
+              <option>Sul</option>
+              <option>Leste</option>
+              <option>Oeste</option>
+              <option>Centro-Oeste</option>
+              <option>Nordeste</option>
+              <option>Sudeste</option>
+            </select>
+            <label for="regiao" class="form-label-sm">Região</label>
+          </div>
+
+          <div class="form-floating col-12 col-md-6">
+            <input type="text" class="form-control" id="estado" placeholder="Estado">
+            <label for="estado" class="form-label-sm">Estado</label>
+          </div>
+
+          <div class="form-floating col-12 col-md-6">
+            <input type="text" class="form-control" id="rodape" placeholder="Rodapé">
+            <label for="rodape" class="form-label-sm">Rodapé</label>
+          </div>
+           <div class="form-floating col-12 col-md-6">
+                <select class="form-select" id="severidade">
+                    <option selected disabled>Selecione a severidade</option>
+                    <option>Baixa</option>
+                    <option>Média</option>
+                    <option>Alta</option>
+                    <option>Crítica</option>
+                </select>
+                <label for="severidade" class="form-label-sm">Severidade</label>
+            </div> 
+        </div>
+
+        <div class="form-floating mt-3 mb-4">
+          <textarea class="form-control" placeholder="Mensagem" id="mensagem" style="height: 120px;"></textarea>
+          <label for="mensagem" class="form-label-sm">Mensagem</label>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100">Enviar</button>
+      </form>
+    </div>
+  </div>
+</div>
